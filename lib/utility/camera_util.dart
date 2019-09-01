@@ -9,31 +9,15 @@ typedef HandleDetection = Future<List<Face>> Function(
     FirebaseVisionImage image);
 
 Future<CameraDescription> getCamera(CameraLensDirection dir) async {
-  // var chekperm = await checkpermission(Permission.Camera);
-  // if(!chekperm){
-  //   requestPermission(Permission.Camera);
-  //   getstatus(Permission.Camera);
-  // }
+
   return await availableCameras().then(
-    (List<CameraDescription> cameras) => cameras.firstWhere(
-      (CameraDescription camera) => camera.lensDirection == dir,
-    ),
+    (List<CameraDescription> cameras) => cameras[0]
+    // .firstWhere(
+    //   (CameraDescription camera) => camera.lensDirection == dir,
+    //),
   );
 }
-// Future<bool> checkpermission(Permission permission) async{
-// bool result = await SimplePermissions.checkPermission(permission);
-// print("permission is "+ result.toString());
-// return result;
-// }
-// void requestPermission(Permission permission) async{
-// var result = await SimplePermissions.requestPermission(permission);
-// print("request :"+ result.toString());
-// }
-// void getstatus(Permission permission) async{
-// final result = await
-// SimplePermissions.getPermissionStatus(permission);
-// print("permission status is :"+result.toString());
-// }
+
 Uint8List concatenatePlanes(List<Plane> planes) {
   final WriteBuffer allBytes = WriteBuffer();
   planes.forEach((Plane plane) => allBytes.putUint8List(plane.bytes));

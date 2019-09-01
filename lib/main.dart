@@ -1,33 +1,35 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_ml_kit/pages/faecPage.dart';
-import 'package:flutter_ml_kit/utils/camera_util.dart';
+import 'package:provider/provider.dart';
 
-import 'pages/faceContourDetectionPage.dart';
+import 'pages/facePage.dart';
+import 'stateModel/appstate.dart';
 
-Future<void> main()async {
-  CameraDescription cameras;
+List<CameraDescription> cameras;
+Future<void> main() async{
   try {
-     cameras = await  getCamera(CameraLensDirection.front);
+    cameras = await availableCameras();
   } on CameraException catch (e) {
     logError(e.code, e.description);
   }
-   runApp(MyApp(cameraDescription: cameras));
 
+    runApp(MyApp());
 }
 void logError(String code, String message) =>
     print('Error: $code\nError Message: $message');
 class MyApp extends StatelessWidget {
-  final CameraDescription cameraDescription;
-  MyApp({this.cameraDescription});
+final  AppState _appState = AppState();
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
+    return ChangeNotifierProvider<AppState>(
+        builder: (_) => _appState,
+        child :MaterialApp(
+      title: 'Firebase Ml Vision',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+       primarySwatch: Colors.blue,
       ),
-      home: FaceContourDetectionScreen(cameraDescription: cameraDescription),
-    );
+      home: FacePage()
+    ));
   }
 }
