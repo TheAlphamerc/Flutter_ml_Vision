@@ -4,76 +4,76 @@ import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ml_kit/stateModel/appstate.dart';
 import 'package:provider/provider.dart';
-
 import 'helper/customPainter.dart';
 
 class ImageAndFaces extends StatefulWidget {
-   ImageAndFaces({this.faces, this.appState});
-
-   final AppState  appState;
-   final List<Face> faces;
-    File imageFile;
-
+  // ui.Image image;
+  final AppState appState;
+  ImageAndFaces({this.appState});
   _ImageAndFacesState createState() => _ImageAndFacesState();
 }
 
 class _ImageAndFacesState extends State<ImageAndFaces> {
-  AppState  appState;
-   List<Face> faces;
+  List<Face> faces;
   ui.Image image;
+  ui.Image _image;
   File imageFile;
-
   @override
   void initState() {
-    appState = widget.appState;
-    // faces = widget.faces;
-    // imageFile = widget.imageFile;
-     faces = appState.getfaceList;
-     imageFile = appState.getImage;
-    initImage();
+    _image = widget.appState.getUIImage;
     super.initState();
   }
 
-  void initImage() async{
-    image = await appState.loadImgage();
+  void initImage(AppState appState) async {
+    await appState.loadImgage().then((img) {
+      // setState(() {
+      //   //image = img;
+      // });
+    });
   }
-
-  // Future<ui.Image> _loadImgage(File file)async{
-  //   final data = await file.readAsBytes();
-  //   return await decodeImageFromList(data);
-  // }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AppState>(builder: (context, appstate, child) {
-      initImage();
-      return Column(
-       children: <Widget>[
-         Flexible(
-           flex: 2,
-           child: Container(
-             constraints: BoxConstraints.expand(),
-             child: FittedBox(
-
-               child: SizedBox(
-                 width: image != null ? image.width.toDouble() : 0,
-                 height: image != null ? image.height.toDouble() : 0,
-                 child: CustomPaint(
-                   painter: FacePainter(image,appstate.getfaceList,appstate),
-                 ),
-               ),
-             )// Image.file(imageFile,fit: BoxFit.cover,),
-           ),),
-         Flexible(
-         flex: 1,
-         child:  ListView(
-           children: faces.map<Widget>((f)=>FaceCordinate(face: f,)).toList(),
-         )
-         ),
-       ],
-    );});
+      if (appstate.getImage != null) {}
+      return appstate.getImage == null
+          ? Container()
+          : Column(
+              children: <Widget>[
+                Flexible(
+                  flex: 2,
+                  child: Container(
+                      constraints: BoxConstraints.expand(),
+                      child: FittedBox(
+                        child: SizedBox(
+                          width: widget.appState.getUIImage?.width != null
+                              ? widget.appState.getUIImage.width.toDouble()
+                              : 0,
+                          height: widget.appState.getUIImage?.width != null
+                              ? widget.appState.getUIImage.height.toDouble()
+                              : 0,
+                          child: CustomPaint(
+                            painter: FacePainter(widget.appState.getUIImage,
+                                appstate.getfaceList, appstate),
+                          ),
+                        ),
+                      )),
+                ),
+                Flexible(
+                    flex: 1,
+                    child: ListView(
+                      children: appstate.getfaceList
+                          .map<Widget>((f) => FaceCordinate(
+                                face: f,
+                              ))
+                          .toList(),
+                    )),
+              ],
+            );
+    });
   }
 }
+
 class FaceCordinate extends StatelessWidget {
   const FaceCordinate({this.face});
 
@@ -82,10 +82,13 @@ class FaceCordinate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pos = face.boundingBox;
-   return Consumer<AppState>(builder: (context, appstate, child) { return Container(
-      child: ListTile(
-        title: Text('${pos.top} , ${pos.left} , ${pos.bottom} , ${pos.right}'),
-      ),
-    );});
+    return Consumer<AppState>(builder: (context, appstate, child) {
+      return Container(
+        child: ListTile(
+          title:
+              Text('${pos.top} , ${pos.left} , ${pos.bottom} , ${pos.right}'),
+        ),
+      );
+    });
   }
 }

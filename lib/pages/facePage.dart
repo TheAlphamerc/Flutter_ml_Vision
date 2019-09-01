@@ -7,7 +7,6 @@ import 'package:flutter_ml_kit/stateModel/appstate.dart';
 import 'package:flutter_ml_kit/utility/camera_util.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-
 import '../main.dart';
 import 'imageAndFaces.dart';
 
@@ -17,64 +16,59 @@ class FacePage extends StatefulWidget {
 
 class _FacePageState extends State<FacePage> {
   CameraController controller;
-
   List<Face> _faces;
-  File _imageFile;
-
+  bool _isImageLoadSuccess = false;
   @override
   void dispose() {
     controller?.dispose();
     super.dispose();
   }
 
-@override
+  @override
   void initState() {
     CameraDescription description = cameras[0];
-    getCamera(CameraLensDirection.front).then((desc)=>{
-        description  =  desc
-   });
-   try{
+    getCamera(CameraLensDirection.front).then((desc) => {description = desc});
+    try {
       controller = CameraController(description, ResolutionPreset.medium);
       controller.initialize().then((_) {
-      if (!mounted) {
-        return;
-      }
-      else{
-        print('Camera initilised success');
-      }
-      setState(() {});
-    });
-   }
-   on CameraException catch(error){
-    print('Error :  $error , ${error?.description}');
-   }
+        if (!mounted) {
+          return;
+        } else {
+          print('Camera initilised success');
+        }
+        setState(() {});
+      });
+    } on CameraException catch (error) {
+      print('Error :  $error , ${error?.description}');
+    }
     super.initState();
   }
 
-  void _processImage(File imageFile,AppState state)async {
-  final image = FirebaseVisionImage.fromFile(imageFile);
-  final faceDetector = FirebaseVision.instance.faceDetector(
-    FaceDetectorOptions(
-      mode: FaceDetectorMode.accurate,
-      enableLandmarks: true,
-      enableTracking: true
-      )
-  );
-  if(image != null){
-    var faces = await faceDetector.detectInImage(image);
-    setState(() {
-      if(mounted){
-        print('Found face in image face count [${faces.length}]');
-        state.setFaceList = faces;
-        state.setImage = imageFile;
-         _faces = faces;
-         _imageFile = imageFile;
-      }
-    });
+  void _processImage(File imageFile, AppState state) async {
+    final image = FirebaseVisionImage.fromFile(imageFile);
+    final faceDetector = FirebaseVision.instance.faceDetector(
+        FaceDetectorOptions(
+            mode: FaceDetectorMode.accurate,
+            enableLandmarks: true,
+            enableTracking: true));
+    if (image != null) {
+      var faces = await faceDetector.detectInImage(image);
+      setState(() {
+        if (mounted) {
+          print('Found face in image face count [${faces.length}]');
+          state.setFaceList = faces;
+          state.setImage = imageFile;
+          _faces = faces;
+        }
+      });
+      var uiImage = await state.loadImgage();
+      setState(() {
+        _isImageLoadSuccess = !_isImageLoadSuccess;
+      });
+    }
   }
-}
 
- void _openImagePicker(BuildContext context,AppState state) {
+  void _openImagePicker(BuildContext context, AppState state) {
     showModalBottomSheet(
         context: context,
         builder: (BuildContext context) {
@@ -92,7 +86,7 @@ class _FacePageState extends State<FacePage> {
                   color: Theme.of(context).primaryColor,
                   child: Text('Use Camera'),
                   onPressed: () {
-                    _getImage(context, ImageSource.camera,state);
+                    _getImage(context, ImageSource.camera, state);
                   },
                 ),
                 SizedBox(
@@ -102,7 +96,7 @@ class _FacePageState extends State<FacePage> {
                   color: Theme.of(context).primaryColor,
                   child: Text('Use Gallery'),
                   onPressed: () {
-                    _getImage(context, ImageSource.gallery,state);
+                    _getImage(context, ImageSource.gallery, state);
                   },
                 )
               ],
@@ -111,10 +105,10 @@ class _FacePageState extends State<FacePage> {
         });
   }
 
-   void _getImage(BuildContext context, ImageSource source,AppState state) {
+  void _getImage(BuildContext context, ImageSource source, AppState state) {
     ImagePicker.pickImage(source: source, maxWidth: 400).then((File file) {
       setState(() {
-        _processImage(file,state);
+        _processImage(file, state);
       });
       Navigator.pop(context);
     });
@@ -141,21 +135,26 @@ class _FacePageState extends State<FacePage> {
   @override
   Widget build(BuildContext context) {
     return Consumer<AppState>(builder: (context, appstate, child) {
-      // state = appstate;
-      return  Scaffold(
-      appBar: AppBar(
-        title: Text('Face Detection'),
-      ),
-      body: _faces == null ? Container(
-        height: MediaQuery.of(context).size.height,
-        child:  _cameraPreviewWidget(),
-      ) :   ImageAndFaces(appState : appstate, faces: _faces,),
-      floatingActionButton: FloatingActionButton(
-        onPressed: (){  _openImagePicker(context,appstate);},
-        tooltip: 'Pick an image',
-        child: Icon(Icons.add_a_photo),
-      ),
-    );});
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Face Detection'),
+        ),
+        body: _faces == null
+            ? Container(
+                height: MediaQuery.of(context).size.height,
+                child: _cameraPreviewWidget(),
+              )
+            : _isImageLoadSuccess
+                ? ImageAndFaces(appState: appstate)
+                : ImageAndFaces(appState: appstate),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            _openImagePicker(context, appstate);
+          },
+          tooltip: 'Pick an image',
+          child: Icon(Icons.add_a_photo),
+        ),
+      );
+    });
   }
 }
-
